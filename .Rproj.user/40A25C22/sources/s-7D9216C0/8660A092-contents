@@ -1,0 +1,27 @@
+library("ggmap")
+
+# generate a single example address
+lonlat_sample <- as.numeric(geocode("the hollyood bowl"))
+lonlat_sample  # note the order is longitude, latitiude
+
+res <- revgeocode(lonlat_sample, output="more")
+# can then access zip and neighborhood where populated
+res$postal_code
+res$neighborhood
+
+mse_vec <- function(truth, estimate, na_rm = TRUE, ...) {
+  
+  mse_impl <- function(truth, estimate) {
+    mean((truth - estimate) ^ 2)
+  }
+  
+  metric_vec_template(
+    metric_impl = mse_impl,
+    truth = truth, 
+    estimate = estimate,
+    na_rm = na_rm,
+    cls = "numeric",
+    ...
+  )
+  
+}

@@ -1,0 +1,25 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1625065284815.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1761568600",
+    "id" : "752A702A",
+    "lastKnownWriteTime" : 1580500503,
+    "last_content_update" : 1580500503,
+    "path" : "~/.Renviron",
+    "project_path" : null,
+    "properties" : {
+        "cursorPosition" : "0,17",
+        "scrollLine" : "0"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 14,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "sh"
+}

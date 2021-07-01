@@ -1,0 +1,488 @@
+---
+title: "The imposter syndrome is strong with this one"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  cache = TRUE,
+  message = FALSE,
+  warning = FALSE
+)
+```
+
+```{r}
+library(tidyverse)
+library(tidymodels)
+library(stacks)
+dir <- '20210302'
+path_coefs_glm <- here::here(dir, 'coefs_glm.rds')
+path_res_knn <- here::here(dir, 'res_knn.rds')
+path_res_rf <- here::here(dir, 'res_rf.rds')
+path_fit_ens <- here::here(dir, 'fit_ens.rds')
+path_preds_holdout <- here::here(dir, 'preds_holdout.csv')
+path_probs_holdout <- here::here(dir, 'probs_holdout.csv')
+df <- 
+  here::here(dir, 'sliced-s00e01-data.csv') %>% 
+  read_csv(guess_max = 20000) %>% 
+  select(-X1)
+
+df_holdout <-
+  here::here(dir, 'sliced-s00e01-holdout.csv') %>% 
+  read_csv()
+```
+
+Wow there are a lot of columns. Some of these numeric ones are really categorical features in disguise.
+
+```{r}
+df %>% 
+  skimr::skim()
+```
+
+Correlation eda spared for later...
+
+More futile eda trying to gain some insight
+
+```{r}
+df %>% count(dec_o)
+gg_age <-
+  df %>% 
+  group_by(age, age_o) %>% 
+  summarize(across(dec, sum)) %>% 
+  ungroup() %>% 
+  ggplot() +
+  aes(x = age, y = age_o) +
+  geom_point(aes(size = dec, color = dec)) +
+  theme_minimal() +
+  labs(title = 'Ages of people who speed-dated') +
+  guides(color = FALSE, size = FALSE)
+gg_age
+```
+
+Logistic regression with every variable, what could go wrong?
+
+```{r }
+f_glm <- function(col_x) {
+  fit <- glm(
+    formula(glue::glue('match ~ {col_x}')),
+    data = df, 
+    family = 'binomial'
+  )
+  tidy(fit)
+}
+col_y <- 'match'
+nms <- df %>% names()
+cols_x <- nms %>% setdiff(col_y)
+cols_x %>% length()
+cols_x_filt <- cols_x %>% str_subset('id$', negate = TRUE)
+```
+
+```{r, eval=F}
+coefs_glm <-
+  cols_x_filt %>% map_dfr(f_glm)
+```
+
+```{r, eval=F, include=F}
+write_rds(coefs_glm, path_coefs_glm)
+```
+
+```{r, include=F}
+coefs_glm <- path_coefs_glm %>% read_rds()
+```
+
+```{r}
+coefs_glm %>% 
+  filter(term != '(Intercept)') %>% 
+  arrange(p.value)
+```
+
+```{r eval=F, include=F}
+# This stuff sucks
+coefs_glm <-
+  coefs_glm %>% 
+  mutate(idx = row_number())
+
+# Maybe there is something with variables with insignificant Intercepts? Nah
+coefs_glm %>% 
+  filter(term == '(Intercept)') %>% 
+  filter(p.value > 0.05)
+coefs_glm %>% 
+  # filter(term != '(Intercept)') %>% 
+  # filter(idx %in% c(39-1, 61-1, 480-1, 1087-1)) %>% 
+  arrange(p.value)
+coefs_glm %>% 
+  filter(term != '(Intercept)') %>% 
+  arrange(p.value)
+```
+
+On average, people rated each other around a 5-7.
+
+```{r}
+df %>% 
+  count(like, like_o) %>% 
+  mutate(across(c(like, like_o), factor)) %>% 
+  drop_na() %>% 
+  ggplot() +
+  aes(x = like, y = like_o) +
+  geom_tile(aes(fill = n), alpha = 0.7) +
+  geom_text(aes(label = n)) +
+  theme_minimal() +
+  labs(
+    title = 'Did the people like each other?'
+  )
+```
+
+We've got a ton of the these {attribute} and {attribute}\_o (other person) feature pairs. Surely we can do something with them
+
+Note that there is a big class imbalance.
+
+```{r}
+df %>% 
+  count(match) %>% 
+  mutate(across(match, factor)) %>% 
+  ggplot() +
+  aes(x = match, y= n) +
+  geom_col()
+```
+
+There's variation in the number of people in each wave of speed-dating. Probably not useful for a quick model.
+
+```{r}
+df %>% 
+  count(wave) %>% 
+  ggplot() +
+  aes(x = wave, y = n) +
+  geom_col()
+```
+
+I noticed that the p.values were smaller for paired features, and it might just make sense to focus on them.
+
+```{r}
+cols_x_paired <- 
+  cols_x %>%
+  str_remove('_o$') %>% 
+  tibble(col = .) %>% 
+  count(col) %>% 
+  filter(n > 1L) %>% 
+  filter(col != 'dec')
+cols_x_paired
+
+f_select <- function(data) {
+  res <-
+    data %>% 
+    select(
+    any_of(col_y),
+    one_of(cols_x_paired %>% pull(col)),
+    one_of(cols_x_paired %>% pull(col) %>% paste0('_o'))
+  )
+  
+  if(any('match' %in% colnames(res))) {
+    res <-
+      res %>% 
+      mutate(across(match, factor))
+  }
+  res
+}
+
+df_slim <- df %>% f_select()
+df_holdout_slim <- df_holdout %>% f_select()
+df_slim_nona <- df_slim %>% drop_na()
+```
+
+Canonical correlation plot
+
+```{r}
+cors <-
+  df_slim_nona %>% 
+  select(where(is.numeric)) %>% 
+  corrr::correlate() %>% 
+  rename(col1 = rowname) %>% 
+  pivot_longer(
+    -col1,
+    names_to = 'col2',
+    values_to = 'cor'
+  )
+
+gg_cors <-
+  cors %>% 
+  ggplot() +
+  aes(x = col1, y = col2) +
+  geom_tile(aes(fill = cor), alpha = 0.7) +
+  geom_text(aes(label = scales::number(cor, 0.1))) +
+  theme_minimal() +
+  guides(fill = FALSE) +
+  labs(
+    title = 'Correlation plot with paired features',
+    x = NULL, y = NULL
+  )
+gg_cors
+```
+
+Can we differentiate solely based on these paired features? Also, I don't think I need to split into train-test if we have a true holdout? Probably a bad call, but that's why I'm an engineer and not a true DS.
+
+```{r}
+# Use the nona data set for this cuz we don't like nas.
+rec_umap <-
+  recipe(match ~ ., data = df_slim_nona) %>% 
+  embed::step_umap(all_predictors(), outcome = vars(match), num_comp = 2)
+
+juiced_umap <-
+  rec_umap %>% 
+  prep() %>% 
+  juice()
+
+gg_umap <-
+  juiced_umap %>% 
+  ggplot() +
+  aes(x = umap_1, umap_2) +
+  geom_point(aes(color = match), alpha = 0.7) +
+  theme_minimal(base_size = 14) +
+  guides(
+    color = guide_legend(override.aes = list(size = 4))
+  ) +
+  theme(legend.position = 'top') +
+  labs(
+    title = 'UMAP Components 1 and 2 for Paired Features'
+  )
+gg_umap
+```
+
+lol at the outlier in the umap plot above.
+
+```{r}
+rec <-
+  recipe(match ~ ., data = df_slim) %>% 
+  # One of these steps (probably near zero variance?) is causing a column to be dropped in rand forest, which sometimes raises a warning
+  # step_nzv(all_numeric_predictors()) %>% 
+  step_zv(all_numeric_predictors()) %>% 
+  # step_lincomb(all_numeric_predictors()) %>% 
+  # Impute at the end?
+  step_impute_knn(all_numeric_predictors()) %>% 
+  step_downsample(all_outcomes())
+
+# Just checking that it works.
+rec %>% 
+  prep() %>% 
+  juice()
+```
+
+I'm intentionally picking methods that are relatively different and don't have a lot of stuff to tune.
+
+Parallel processing would be awesome here but it usually breaks my laptop.
+
+```{r }
+spec_knn <-
+  nearest_neighbor(neighbors = tune(), weight_func = tune()) %>% 
+  set_mode('classification') %>% 
+  set_engine('kknn') 
+
+wf_knn <- 
+  workflow() %>% 
+  add_recipe(rec) %>% 
+  add_model(spec_knn)
+
+spec_rf <-
+  rand_forest(mtry = tune(), trees = tune()) %>% 
+  set_mode('classification') %>% 
+  set_engine('ranger')
+
+wf_rf <-
+  workflow() %>% 
+  add_recipe(rec) %>% 
+  add_model(spec_rf)
+
+ctrl_grid <- control_grid(save_pred = TRUE, save_workflow = TRUE, verbose = TRUE)
+met_set <- metric_set(mn_log_loss, accuracy, roc_auc)
+```
+
+```{r, eval=F}
+set.seed(6669)
+folds <- df_slim %>% vfold_cv(strata = match, v = 10)
+grid_knn <-
+  grid_max_entropy(
+    wf_knn %>% parameters(),
+    size = 10
+  )
+grid_knn
+
+# I feel like this is overfitting
+grid_rf <-
+  grid_max_entropy(
+    trees(),
+    # finalize(mtry(), df_slim),
+    mtry(1, round(7/8*ncol(df_slim)-1))
+    size = 10
+  )
+grid_rf
+
+f_tune <- 
+  partial(
+    tune_grid,
+    resamples = folds,
+    metrics = met_set,
+    control = ctrl_grid,
+    ... = 
+  )
+
+res_knn <- wf_knn %>% f_tune(grid = grid_knn)
+res_knn
+res_rf <- wf_rf %>% f_tune(grid = grid_rf)
+res_rf
+```
+
+```{r eval=F, include=F}
+write_rds(res_knn, path_res_knn)
+write_rds(res_rf, path_res_rf)
+```
+
+```{r include=F}
+# For the Rmd knitting
+res_knn <- read_rds(path_res_knn)
+res_rf <- read_rds(path_res_rf)
+```
+
+```{r}
+params_best_rf <- res_rf %>% select_best(metric = 'mn_log_loss')
+wf_rf_final <- wf_rf %>% finalize_workflow(params_best_rf)
+wf_rf_final
+```
+
+Looking at how the tuning went.
+
+```{r}
+mets_knn <-
+  res_knn %>% 
+  collect_metrics()
+params_best_knn <- res_knn %>% select_best('mn_log_loss')
+wf_knn_best <-
+  wf_knn %>% 
+  finalize_workflow(params_best_knn)
+fit_knn_best <-
+  wf_knn_best %>% 
+  fit(data = df_slim) %>% 
+  pull_workflow_fit()
+fit_knn_best
+mets_knn %>%
+  select(neighbors, weight_func, .metric, mean) %>% 
+  ggplot() +
+  aes(x = neighbors, y = mean) +
+  geom_point(aes(color = weight_func), size = 4) +
+  facet_wrap(~.metric, scales = 'free') +
+  guides(color = guide_legend(override.aes = list(size = 4))) +
+  theme_minimal(base_size = 16) +
+  theme(legend.position = 'top')
+```
+
+```{r}
+mets_rf <-
+  res_rf %>% 
+  collect_metrics()
+mets_rf
+
+mets_rf %>%
+  # filter(.metric == 'mn_log_loss') %>% 
+  #mutate(across(trees, factor)) %>% 
+  ggplot() +
+  aes(x = mtry, y = mean) +
+  geom_point(aes(color = trees, size = trees), size = 4) +
+  facet_wrap(~.metric, scales = 'free') +
+  guides(color = guide_legend(override.aes = list(size = 4))) +
+  theme_minimal(base_size = 16) +
+  theme(legend.position = 'top')
+```
+
+Variable importance time. (This is where i realized i left in `dec` and `dec_o` on accident.)
+
+```{r}
+spec_rf_vi <-
+  rand_forest(mtry = 12, trees = 1970) %>% 
+  set_mode('classification') %>% 
+  set_engine('ranger', importance = 'impurity')
+wf_rf_vi <-
+  workflow() %>% 
+  add_recipe(rec) %>% 
+  add_model(spec_rf_vi)
+fit_rf_vi <- wf_rf_vi %>% fit(data = df_slim)
+fit_rf_vi
+
+fit_rf_final <-
+  fit_rf_vi %>% 
+  pull_workflow_fit() 
+gg_vi <-
+  fit_rf_vi %>% 
+  pull_workflow_fit() %>% 
+  vip::vip() +
+  theme_minimal(base_size = 18) +
+  labs(
+    title = 'Variable Importance'
+  )
+gg_vi
+```
+
+Ensembling time with a package i just learned how to use yesterday! This is basically a regularized linear regression on our knn and rf models.
+
+```{r}
+ens_st <-
+  stacks() %>% 
+  add_candidates(res_knn) %>% 
+  add_candidates(res_rf)
+ens_st
+
+fit_ens <-
+  ens_st %>% 
+  blend_predictions() %>% 
+  fit_members()
+fit_ens
+```
+
+A blend of 6 rf models were chosen by the ensembling
+
+```{r, eval=F, include=F}
+write_rds(fit_ens, path_fit_ens)
+```
+
+```{r, include=F}
+fit_ens <- read_rds(path_fit_ens)
+```
+
+```{r, eval=F, include=F}
+# Not enough time for this...
+probs_ens <-
+  fit_ens %>% 
+  predict(new_data = df_slim, type = 'prob') %>% 
+  bind_cols(df_slim %>% select(match))
+probs_ens
+
+probs_ens %>% 
+  roc_auc(truth = match, .pred_0)
+
+preds_ens <-
+  fit_ens %>% 
+  predict(new_data = df_slim, type = 'prob') %>% 
+  bind_cols(df_slim %>% select(match))
+preds_ens
+
+preds_ens %>% 
+  roc_auc(truth = match, .pred_class)
+```
+
+```{r}
+# preds_ens_holdout <-
+#   fit_ens %>% 
+#   predict(df_holdout_slim, type = 'pred')
+df_holdout_slim
+preds_holdout <-
+  # fit_rf_final %>% 
+  fit_knn_best %>% 
+  predict(df_holdout_slim, type = 'class')
+preds_holdout
+probs_holdout <-
+  # fit_rf_final %>% 
+  fit_knn_best %>% 
+  predict(df_holdout_slim, type = 'prob') %>% 
+  rename(prob_0 = .pred_0, prob_1 = .pred_1)
+probs_holdout
+write_csv(preds_holdout, path_preds_holdout)
+write_csv(probs_holdout, path_probs_holdout)
+```

@@ -1,0 +1,27 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1623196609544.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1777489559",
+    "id" : "41A8D27A",
+    "lastKnownWriteTime" : 1624995145,
+    "last_content_update" : 1624995145670,
+    "path" : "~/Documents/Sliced/SlicedViz/Season1Ep2Viz.R",
+    "project_path" : "Season1Ep2Viz.R",
+    "properties" : {
+        "cursorPosition" : "202,0",
+        "scrollLine" : "0",
+        "source_window_id" : "wfgq5pdj85ero",
+        "tempName" : "Untitled1"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 3,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

@@ -1,0 +1,27 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1625014392704.000,
+    "dirty" : true,
+    "encoding" : "",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "8660A092",
+    "lastKnownWriteTime" : 1625010538,
+    "last_content_update" : 1625014506967,
+    "path" : null,
+    "project_path" : null,
+    "properties" : {
+        "cursorPosition" : "22,20",
+        "scrollLine" : "0",
+        "source_window_id" : "wz0vpvpmmfmqq",
+        "tempName" : "Untitled1"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 17,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

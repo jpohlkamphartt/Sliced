@@ -1,0 +1,27 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1621695620995.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "D3EF2654",
+    "lastKnownWriteTime" : 1621728748,
+    "last_content_update" : 1621728748328,
+    "path" : "~/Documents/Sliced/Sliced Outline.R",
+    "project_path" : "Sliced Outline.R",
+    "properties" : {
+        "cursorPosition" : "86,47",
+        "scrollLine" : "0",
+        "source_window_id" : "wz0vpvpmmfmqq",
+        "tempName" : "Untitled1"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

@@ -1,0 +1,27 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1624931118680.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "7CCD57AE",
+    "lastKnownWriteTime" : 1625010465,
+    "last_content_update" : 1625010465624,
+    "path" : "~/Documents/Sliced/Binomial S1E4R1 - models.R",
+    "project_path" : "Binomial S1E4R1 - models.R",
+    "properties" : {
+        "cursorPosition" : "177,1",
+        "scrollLine" : "0",
+        "source_window_id" : "wz0vpvpmmfmqq",
+        "tempName" : "Untitled1"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 11,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

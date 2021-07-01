@@ -1,0 +1,27 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1624579737225.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "29093AE",
+    "lastKnownWriteTime" : 1624910976,
+    "last_content_update" : 1624910976572,
+    "path" : "~/Documents/Sliced/S1E2R2 - Models.R",
+    "project_path" : "S1E2R2 - Models.R",
+    "properties" : {
+        "cursorPosition" : "33,13",
+        "scrollLine" : "0",
+        "source_window_id" : "wz0vpvpmmfmqq",
+        "tempName" : "Untitled2"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 14,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

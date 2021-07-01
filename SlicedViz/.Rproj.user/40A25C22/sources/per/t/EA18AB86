@@ -1,0 +1,27 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1622910528954.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "3081414731",
+    "id" : "EA18AB86",
+    "lastKnownWriteTime" : 1623030241,
+    "last_content_update" : 1623030241888,
+    "path" : "~/Documents/Sliced/SlicedViz/Ep2Viz.R",
+    "project_path" : "Ep2Viz.R",
+    "properties" : {
+        "cursorPosition" : "17,31",
+        "scrollLine" : "0",
+        "source_window_id" : "wcbt501x4l861",
+        "tempName" : "Untitled1"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

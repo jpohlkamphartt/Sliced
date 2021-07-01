@@ -1,0 +1,27 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1623009265276.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "38B0EE54",
+    "lastKnownWriteTime" : 1625010543,
+    "last_content_update" : 1625010543123,
+    "path" : "~/Documents/Sliced/S00E04- Practice.R",
+    "project_path" : "S00E04- Practice.R",
+    "properties" : {
+        "cursorPosition" : "4,11",
+        "scrollLine" : "0",
+        "source_window_id" : "wz0vpvpmmfmqq",
+        "tempName" : "Untitled1"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 7,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

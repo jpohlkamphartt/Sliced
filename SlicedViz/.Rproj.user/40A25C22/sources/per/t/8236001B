@@ -1,0 +1,27 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1623169466306.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "2579017069",
+    "id" : "8236001B",
+    "lastKnownWriteTime" : 1624995129,
+    "last_content_update" : 1624995129857,
+    "path" : "~/Documents/Sliced/SlicedViz/S0E1R1 Viz.R",
+    "project_path" : "S0E1R1 Viz.R",
+    "properties" : {
+        "cursorPosition" : "116,21",
+        "scrollLine" : "0",
+        "source_window_id" : "wfgq5pdj85ero",
+        "tempName" : "Untitled1"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 2,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}
