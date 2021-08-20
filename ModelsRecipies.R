@@ -48,7 +48,7 @@ FRMLA<-formula(TotalViews~.)
 step_tokenize(Title)%>%
   step_stem(Title)%>%
   step_stopwords(Title,custom_stopword_source = c(0:20000,letters))%>%
-  step_tokenfilter(Title, max_tokens = 250) %>%
+  step_tokenfilter(Title, max_tokens = tune()) %>%
   step_tfidf(Title) %>%
 
 # location specific impution
@@ -65,13 +65,13 @@ Rec_Cat<-
   # step_YeoJohnson(all_numeric_predictors())%>% 
   step_impute_knn(all_numeric_predictors())%>%
   step_zv(all_predictors())%>%
-  step_dummy(all_nominal_predictors(),one_hot=T)%>%
-  step_corr(all_numeric_predictors(),threshold = .9)%>%
+  # step_dummy(all_nominal_predictors(),one_hot=T)%>%
+  # step_corr(all_numeric_predictors(),threshold = .9)%>%
   step_smote(damaged)
 
 Rec_glm<-
   recipe(modelFormula_glm ,data=modelTrain)%>%
-  step_num2factor(incident_month,levels = as.character(sort(unique(modelData$incident_month))))%>%
+  # step_num2factor(incident_month,levels = as.character(sort(unique(modelData$incident_month))))%>%
   step_novel(all_nominal_predictors()) %>%
   step_other(all_nominal_predictors(), threshold = 0.01) %>%
   step_unknown(all_nominal_predictors()) %>%
@@ -81,16 +81,16 @@ Rec_glm<-
   step_corr(all_numeric_predictors(),threshold = .9)%>%
   step_smote(damaged)
 
-Rec_knn<-
-  recipe(modelFormula_knn ,data=modelTrain)%>%
-  step_novel(all_nominal_predictors()) %>%
-  step_other(all_nominal_predictors(), threshold = 0.01) %>%
-  step_unknown(all_nominal_predictors()) %>%
-  step_impute_knn(all_numeric_predictors())%>%
-  step_zv(all_predictors())%>%
-  step_dummy(all_nominal_predictors(),one_hot=T)%>%
-  step_corr(all_numeric_predictors(),threshold = .9)%>%
-  step_smote(damaged)
+# Rec_knn<-
+#   recipe(modelFormula_knn ,data=modelTrain)%>%
+#   step_novel(all_nominal_predictors()) %>%
+#   step_other(all_nominal_predictors(), threshold = 0.01) %>%
+#   step_unknown(all_nominal_predictors()) %>%
+#   step_impute_knn(all_numeric_predictors())%>%
+#   step_zv(all_predictors())%>%
+#   step_dummy(all_nominal_predictors(),one_hot=T)%>%
+#   step_corr(all_numeric_predictors(),threshold = .9)%>%
+#   step_smote(damaged)
 
 
 #### Models for different prediction types
@@ -127,36 +127,36 @@ glmRes<-tune_grid(
   control = ctrl_grid
 )
 
-### no KNN for count data
-knnSpec <- nearest_neighbor(
-  neighbors = tune(), weight_func = tune()
-) %>% set_engine("kknn") %>%
-  set_mode("classification")
-# set_mode("regression")
-
-
-knnGrid<-grid_max_entropy(
-  neighbors(range = c(4L,8L)),
-  weight_func(c("optimal","rectangular")),
-  size = 6,
-  variogram_range = .75
-)
-
-knnWflow<-workflow()%>%
-  add_recipe(Rec_knn)%>%
-  add_model(knnSpec)
-
-knnRes<-tune_grid(
-  knnWflow,
-  resamples = modelFoldz,
-  grid = knnGrid,
-  metrics = metric_set(mn_log_loss,roc_auc),
-  # metrics = metric_set(rmse,rsq,mae),
-  control = ctrl_grid
-)
+# ### no KNN for count data
+# knnSpec <- nearest_neighbor(
+#   neighbors = tune(), weight_func = tune()
+# ) %>% set_engine("kknn") %>%
+#   set_mode("classification")
+# # set_mode("regression")
+# 
+# 
+# knnGrid<-grid_max_entropy(
+#   neighbors(range = c(4L,8L)),
+#   weight_func(c("optimal","rectangular")),
+#   size = 6,
+#   variogram_range = .75
+# )
+# 
+# knnWflow<-workflow()%>%
+#   add_recipe(Rec_knn)%>%
+#   add_model(knnSpec)
+# 
+# knnRes<-tune_grid(
+#   knnWflow,
+#   resamples = modelFoldz,
+#   grid = knnGrid,
+#   metrics = metric_set(mn_log_loss,roc_auc),
+#   # metrics = metric_set(rmse,rsq,mae),
+#   control = ctrl_grid
+# )
 catSpec<-boost_tree( trees = tune(), min_n = tune(), tree_depth = tune(),
                     sample_size = tune(),learn_rate = tune(),mtry = tune())%>%
-  # set_engine("catboost")%>%
+  set_engine("catboost")%>%
   # set_engine("catboost", objective='Poisson') %>% 
   # set_engine("xgboost", objective='count:poisson'# objective = "multi:softprob") %>% 
   # set_engine("catboost", objective='Multiclass') %>% 

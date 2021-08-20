@@ -39,6 +39,33 @@ source("SlicedTheme.R")
 modelData<-as_tibble(read.csv("Season 2/sliced-s01e05/train.csv",header=T,stringsAsFactors=F,sep=","))
 holdData<-as_tibble(read.csv("Season 2/sliced-s01e05/test.csv",header=T,stringsAsFactors=F,sep=","))
 
+
+rmsle_vec<-function (truth, estimate, na_rm = TRUE, ...) 
+{
+  rmsle_impl <- function(truth, estimate) {
+    sqrt(mean((log(truth+1) - log(estimate+1))^2))
+  }
+  metric_vec_template(metric_impl = rmsle_impl, truth = truth, 
+                      estimate = estimate, na_rm = na_rm, cls = "numeric")
+}
+
+rmsle<-function(data,...){
+  UseMethod("rmsle")
+}
+
+rmsle<-new_numeric_metric(rmsle,direction= "minimize")
+
+rmsle.data.frame<-function (data, truth, estimate, na_rm = TRUE, ...) 
+{
+  metric_summarizer(metric_nm = "rmsle", metric_fn = rmsle_vec, 
+                    data = data, truth = !!enquo(truth), estimate = !!enquo(estimate), 
+                    na_rm = na_rm)
+}
+
+
+rmsle(data.frame(x=c(2,1), y=c(1,1)), x,y)
+
+
 skim(modelData)
 modelData<-modelData%>%
   dplyr::select(

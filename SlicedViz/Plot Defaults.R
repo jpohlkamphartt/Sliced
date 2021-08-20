@@ -372,3 +372,93 @@ model_cum%>%
     like that one gym towel.."
   )
 
+## texrt angle
+modelData%>%separate_rows(artists,sep = '\', \'')%>%
+  mutate(artists = stringr::str_remove_all(artists, "[[:punct:]]"),
+         elite = popularity>quantile(popularity,.98))%>%
+  group_by(artists)%>%
+  summarise(popularity = mean(popularity),
+            eliteNum = sum(elite),
+            n = n()
+  )%>%
+  ungroup()%>%
+  filter(eliteNum ==1)%>%
+  mutate(artists = fct_reorder(artists, popularity))%>%
+  filter(popularity > quantile(popularity, .8))%>%
+  ggplot(aes(x = artists, y = popularity, fill = eliteNum))+
+  geom_bar(stat = "identity")+
+  scale_fill_sliced("Divergent",discrete = F)+
+  theme(axis.text.x = element_text(angle = 35, size = 7))
+
+## facet
+modelData%>%
+  group_by(customer_age, income_category, education_level)%>%
+  summarise(credit_limit = median(credit_limit))%>%
+  filter(customer_age<65)%>%
+  ggplot(aes(x = customer_age, y = credit_limit))+
+  geom_bar(width = 1, stat = "identity", color = "white")+
+  scale_fill_sliced("Divergent",discrete = F)+
+  geom_smooth( se = F)+
+  scale_color_sliced()+
+  labs(
+    title = "Midlife Crisis, more like Midlife Credit!",
+    subtitle = "Age Curve for Credit Limit",
+    x = "Age",
+    y = "Credit Limit",
+    color = "% Female"
+  )+
+  facet_grid(income_category ~ education_level)
+
+## animate
+# game titles? text mining?
+library(gganimate)
+myanim<-modelData%>%
+  filter(Game %in%(modelData%>%filter(Year == 2021, Month == 4,Rank<11))$Game)%>%
+  mutate(date = ym(paste(Year,Month,sep   = "-")))%>%
+  ggplot(aes(x = date, y = log(Hours_watched), color = as.factor(Game)))+
+  geom_point(size = 5)+
+  scale_color_sliced()+
+  Sliced_theme()+
+  labs(
+    title = "Watch The Games Bounce As They Move To The Top!",
+    subtitle = "Top Games Evolution Over Time",
+    y = "Log Rank",
+    x = "Date",
+    color = "Game"
+  )+
+  transition_time(date) +
+  ease_aes()+
+  enter_fade() + 
+  exit_shrink()+
+  shadow_trail( size = 1.5,alpha =.5)
+
+animate(myanim, height = 800, width =800)
+
+
+modelData%>%  filter(Game %in%currenttop)%>%
+  mutate(date = ym(paste(Year,Month,sep   = "-")))%>%
+  ggplot(aes(x = log(Hours_Streamed), y = log(Hours_watched)))+
+  stat_density_2d(aes(fill = ..level..), geom = "polygon", colour="white")+
+  scale_fill_sliced(palette = "Divergent",discrete = F)+
+  Sliced_theme()+
+  labs(
+    y = "Log(Hours Watched)",
+    x = "Log(Hours Streamed)",
+    title = "Hypno-Blob! Vote for the weird viz",
+    subtitle = 'Density of Activity for Month {frame_time}',
+    caption = "Notice that at the start of the school year gaming goes down, but comes back in the spring.
+    Addiction is a bitch."
+  )+
+  transition_time(Month) +
+  ease_aes()
+
+# stratum
+# use of facets
+ggplot(as.data.frame(Titanic),
+       aes(y = Freq,
+           axis1 = Class, axis2 = Sex)) +
+  geom_flow(aes(fill = Survived)) +
+  geom_stratum() +
+  geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
+  scale_x_discrete(limits = c("Class", "Sex")) +
+  facet_wrap(~ Age, scales = "free_y")
